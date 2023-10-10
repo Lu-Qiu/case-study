@@ -1,0 +1,113 @@
+---
+title: "case study"
+author: "Lu Qiu"
+date: "2023-10-10"
+output: html_document
+---
+
+
+```{r}
+library(tidyverse)
+library(ggridges)
+library(leaflet)
+```
+
+
+### Get the data
+
+```{r}
+library(p8105.datasets)
+data(nyc_airbnb)
+```
+
+```{r}
+nyc_airbnb =
+  nyc_airbnb |>
+  rename(borough = neighbourhood_group) |>
+  mutate(stars = review_scores_location / 2)
+```
+
+## Brainstorm questions
+
+- Where are AirBNBs expensive?
+  - Borough? Neighborhood?
+  - Do other factors affect price? What about rating?
+  
+```{r}
+expensive_airbnb =
+  nyc_airbnb |>
+  group_by(borough, room_type) |>
+  summarise(median_price = median(price)) |>
+  pivot_wider(
+    names_from = room_type,
+    values_from = median_price
+  )
+```
+  
+```{r}
+nyc_airbnb |>
+  filter(price < 1000, room_type == 'Entire home/apt') |>
+  ggplot(aes(x = price)) +
+  geom_histogram() +
+  facet_grid(. ~ borough)
+```
+
+```{r}
+nyc_airbnb |>
+  filter(price < 1000, 
+         room_type == 'Entire home/apt',
+         borough == 'Manhattan') |>
+  group_by(neighbourhood) |>
+  summarise(
+    n_apt = n(),
+    mean_price = mean(price)) |>
+  arrange(desc(mean_price))
+```
+
+
+```{r}
+nyc_airbnb |>
+  filter(price < 1000, 
+         room_type == 'Entire home/apt',
+         borough == 'Manhattan') |>
+  mutate(neighbourhood = fct_reorder(neighbourhood, price)) |>
+  ggplot(aes(x = price, y = neighbourhood)) +
+  geom_density_ridges()
+```
+
+
+```{r}
+nyc_airbnb |>
+  filter(price < 1000, 
+         room_type == 'Entire home/apt',
+         borough == 'Manhattan') |>
+  ggplot(aes(x = lat, y = long, color = price)) +
+  geom_point()
+```
+
+```{r}
+nyc_airbnb |>
+  filter(price < 1000, 
+         room_type == 'Entire home/apt',
+         borough == 'Manhattan') |>
+  sample_n(500) |>
+  leaflet() |>
+  addTiles() |>
+  addCircleMarkers(~lat, ~long, radius = 0.5)
+  
+```
+
+
+  
+- Are AirBNBs illegal and do they get shut down?
+
+
+
+- Which units have the most availability?
+- How is review score impacted by location?
+- How many apts are run by one host?
+- 
+
+
+
+
